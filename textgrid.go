@@ -26,7 +26,7 @@ func logStackTrace(err error) {
 }
 
 type TextGrid interface {
-	CreateBrand(Brand) (*Brand, error)
+	CreateBrand(brand CreateBrandPayload) (*Brand, error)
 }
 
 // Lob represents information on how to connect to the lob.com API.
