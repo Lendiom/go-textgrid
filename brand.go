@@ -127,3 +127,19 @@ func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 
 	return result, nil
 }
+
+// GetBrand gets the current brand information
+func (t *textGrid) GetBrand(id string) (*Brand, error) {
+	resp := new(Brand)
+
+	if err := t.get("campaigns/brand/"+id, nil, resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// DeleteBrand removes the brand, unless it has an active campaign
+func (t *textGrid) DeleteBrand(id string) error {
+	return t.delete("campaigns/brand/"+id, nil)
+}

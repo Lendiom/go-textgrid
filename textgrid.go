@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"runtime"
 
 	"github.com/op/go-logging"
@@ -18,15 +19,17 @@ var log = logging.MustGetLogger("textgrid")
 func logStackTrace(err error) {
 	buf := make([]byte, 0, 16384)
 	n := runtime.Stack(buf, false)
-	if err != nil {
-		log.Errorf("Non-nil error %s; stack trace %s", err.Error(), buf[:n])
+	if err == nil {
+		log.Errorf("nil error; stack trace %s", buf[:n])
 	} else {
-		log.Errorf("Nil error; stack trace %s", buf[:n])
+		log.Errorf("non-nil error %s; stack trace %s", err.Error(), buf[:n])
 	}
 }
 
 type TextGrid interface {
 	CreateBrand(brand CreateBrandPayload) (*Brand, error)
+	GetBrand(id string) (*Brand, error)
+	DeleteBrand(id string) error
 }
 
 // Lob represents information on how to connect to the lob.com API.
@@ -62,6 +65,15 @@ func NewTextGrid(baseAPI, accountSid, authToken string) *textGrid {
 
 func (t *textGrid) generateFullUrl(endpoint string) string {
 	return fmt.Sprintf("%s/%s/%s", t.BaseAPI, APIVersion, endpoint)
+}
+
+func (t *textGrid) queryParams(params url.Values) string {
+	res := params.Encode()
+	if res == "" {
+		return ""
+	}
+
+	return "?" + res
 }
 
 func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error {
@@ -107,4 +119,73 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 	}
 
 	return json.Unmarshal(data, returnValue)
+}
+
+func (t *textGrid) get(endpoint string, params url.Values, returnValue interface{}) error {
+	fullURL := t.generateFullUrl(endpoint) + t.queryParams(params)
+	log.Debugf("TextGrid GET %s", fullURL)
+	req, err := http.NewRequest("GET", fullURL, nil)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", t.bearerToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
+		logStackTrace(err)
+		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
+		return err
+	}
+
+	return json.Unmarshal(data, returnValue)
+}
+
+func (t *textGrid) delete(endpoint string, params url.Values) error {
+	fullURL := t.generateFullUrl(endpoint) + t.queryParams(params)
+	log.Debugf("TextGrid DELETE %s", fullURL)
+	req, err := http.NewRequest("DELETE", fullURL, nil)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", t.bearerToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+
+	if resp.StatusCode != 204 {
+		err = fmt.Errorf("non-204 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
+		logStackTrace(err)
+		return err
+	}
+
+	return nil
 }
