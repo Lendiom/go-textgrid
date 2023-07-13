@@ -29,9 +29,10 @@ type CreateBrandPayload struct {
 }
 
 type Brand struct {
-	EntityType        BrandEntityType        `json:"entityType"`
+	ID                string                 `json:"brandId"`
 	CspID             string                 `json:"cspId"`
-	BrandID           string                 `json:"brandId"`
+	AccountSid        string                 `json:"accountSid"`
+	EntityType        BrandEntityType        `json:"entityType"`
 	FirstName         string                 `json:"firstName"`
 	LastName          string                 `json:"lastName"`
 	DisplayName       string                 `json:"displayName"`

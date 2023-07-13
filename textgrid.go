@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
+	"strings"
 
 	"github.com/op/go-logging"
 )
@@ -27,6 +28,8 @@ func logStackTrace(err error) {
 }
 
 type TextGrid interface {
+	CreateAccount(data url.Values) (*Account, error)
+
 	CreateBrand(brand CreateBrandPayload) (*Brand, error)
 	GetBrand(id string) (*Brand, error)
 	DeleteBrand(id string) error
@@ -111,7 +114,79 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 		return err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode == http.StatusBadRequest {
+		var respErr genericError
+		if err := json.Unmarshal(data, &respErr); err != nil {
+			return fmt.Errorf("status code 400 return from %s with body: %s", fullURL, data)
+		}
+
+		var badRequestErr badRequestError
+		if err := json.Unmarshal([]byte(respErr.Error), &badRequestErr); err != nil {
+			return fmt.Errorf("status code 400 return from %s with body: %s", fullURL, data)
+		}
+
+		if badRequestErr.Field == "" {
+			return fmt.Errorf("%s. For the url %s", badRequestErr.Description, fullURL)
+		}
+
+		return fmt.Errorf("the field %s is not correctly formatted. %s. For the url %s", badRequestErr.Field, badRequestErr.Description, fullURL)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
+		logStackTrace(err)
+		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
+		return err
+	}
+
+	return json.Unmarshal(data, returnValue)
+}
+
+func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue interface{}) error {
+	fullURL := t.generateFullUrl(endpoint)
+	log.Debugf("TextGrid POST form %s", fullURL)
+
+	req, err := http.NewRequest("POST", fullURL, strings.NewReader(payload.Encode()))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", t.bearerToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+
+	if resp.StatusCode == http.StatusBadRequest {
+		var respErr genericError
+		if err := json.Unmarshal(data, &respErr); err != nil {
+			return fmt.Errorf("status code 400 return from %s with body: %s", fullURL, data)
+		}
+
+		var badRequestErr badRequestError
+		if err := json.Unmarshal([]byte(respErr.Error), &badRequestErr); err != nil {
+			return fmt.Errorf("status code 400 return from %s with body: %s", fullURL, data)
+		}
+
+		if badRequestErr.Field == "" {
+			return fmt.Errorf("%s. For the url %s", badRequestErr.Description, fullURL)
+		}
+
+		return fmt.Errorf("the field %s is not correctly formatted. %s. For the url %s", badRequestErr.Field, badRequestErr.Description, fullURL)
+	}
+
+	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
 		logStackTrace(err)
 		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
