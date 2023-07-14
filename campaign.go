@@ -90,5 +90,5 @@ func (t *textGrid) AttachNumberToCampaign(id, numberID string) error {
 		PhoneNumberSids: []string{numberID},
 	}
 
-	return t.post("campaigns/campaign/"+id, payload, nil)
+	return t.post("campaigns/number/"+id, payload, nil)
 }
