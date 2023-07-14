@@ -80,3 +80,15 @@ func (t *textGrid) CreateCampaign(payload CreateCampaignPayload) (*Campaign, err
 func (t *textGrid) DeactivateCampaign(id string) error {
 	return t.delete("campaigns/campaign/"+id, nil)
 }
+
+type attachNumberToCampaign struct {
+	PhoneNumberSids []string `json:"phoneNumberSids"`
+}
+
+func (t *textGrid) AttachNumberToCampaign(id, numberID string) error {
+	payload := attachNumberToCampaign{
+		PhoneNumberSids: []string{numberID},
+	}
+
+	return t.post("campaigns/campaign/"+id, payload, nil)
+}

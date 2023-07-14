@@ -34,7 +34,12 @@ type TextGrid interface {
 	GetBrand(id string) (*Brand, error)
 	DeleteBrand(id string) error
 
+	CreateCampaign(payload CreateCampaignPayload) (*Campaign, error)
+	DeactivateCampaign(id string) error
+	AttachNumberToCampaign(id, numberID string) error
+
 	ListAvailablePhoneNumbers(countryCode CountryCode, search AvailableNumbersSearch) (*AvailableNumbers, error)
+	AddIncomingPhoneNumber(payload AddIncomingPhoneNumberPayload) (*IncomingPhoneNumber, error)
 }
 
 // Lob represents information on how to connect to the lob.com API.
@@ -134,11 +139,16 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 		return fmt.Errorf("the field %s is not correctly formatted. %s. For the url %s", badRequestErr.Field, badRequestErr.Description, fullURL)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		err = fmt.Errorf("non-200/201 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
 		logStackTrace(err)
 		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
 		return err
+	}
+
+	// not every endpoint returns something
+	if returnValue == nil {
+		return nil
 	}
 
 	return json.Unmarshal(data, returnValue)

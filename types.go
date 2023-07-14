@@ -13,6 +13,14 @@ var (
 	CountryCodeCanada       CountryCode = "CA"
 )
 
+//WebhookMethod is the http method which should be used for the request to the webhook endpoint
+type WebhookHTTPMethod string
+
+var (
+	WebhookHTTPMethodGet  WebhookHTTPMethod = "GET"
+	WebhookHTTPMethodPost WebhookHTTPMethod = "POST"
+)
+
 // TextGridTime can parse a timestamp returned in the TextGrid API and turn it into
 // a valid Go Time struct.
 type TextGridTime struct {
