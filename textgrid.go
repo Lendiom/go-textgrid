@@ -33,6 +33,8 @@ type TextGrid interface {
 	CreateBrand(brand CreateBrandPayload) (*Brand, error)
 	GetBrand(id string) (*Brand, error)
 	DeleteBrand(id string) error
+
+	ListAvailablePhoneNumbers(countryCode CountryCode, search AvailableNumbersSearch) (*AvailableNumbers, error)
 }
 
 // Lob represents information on how to connect to the lob.com API.

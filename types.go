@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+//CountryCode represents one of two country short codes, US and CA
+type CountryCode string
+
+var (
+	CountryCodeUnitedStates CountryCode = "US"
+	CountryCodeCanada       CountryCode = "CA"
+)
+
 // TextGridTime can parse a timestamp returned in the TextGrid API and turn it into
 // a valid Go Time struct.
 type TextGridTime struct {
