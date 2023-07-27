@@ -122,7 +122,7 @@ var (
 func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 	result := new(Brand)
 
-	if err := t.post("campaigns/brand", brand, result); err != nil {
+	if err := t.post("campaigns/brand/nonblocking", brand, result); err != nil {
 		return nil, err
 	}
 
