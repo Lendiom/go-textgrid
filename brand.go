@@ -126,6 +126,13 @@ func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 		return nil, err
 	}
 
+	// per an email with them:
+	// If you get a blank response, it means that it's pending.
+	// This is something that we need to fix on our end, as it sometimes appears as pending and sometimes blank. But as soon as it's approved, you will see this.
+	if result.IdentityStatus == "" {
+		result.IdentityStatus = "PENDING"
+	}
+
 	return result, nil
 }
 
