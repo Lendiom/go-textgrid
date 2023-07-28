@@ -6,10 +6,10 @@ type TcrWebhookPayload struct {
 	CspID   string `json:"cspId"`
 	CspName string `json:"cspName"`
 
-	BrandName           string `json:"brandName"`
-	BrandReferenceID    any    `json:"brandReferenceId"`
-	BrandID             string `json:"brandId"`
-	BrandIdentityStatus string `json:"brandIdentityStatus"`
+	BrandName           string                  `json:"brandName"`
+	BrandReferenceID    any                     `json:"brandReferenceId"`
+	BrandID             string                  `json:"brandId"`
+	BrandIdentityStatus BrandIdentityStatusType `json:"brandIdentityStatus"`
 
 	CampaignID          string `json:"campaignId"`
 	CampaignReferenceID string `json:"campaignReferenceId"`
