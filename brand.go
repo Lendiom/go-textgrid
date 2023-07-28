@@ -29,36 +29,36 @@ type CreateBrandPayload struct {
 }
 
 type Brand struct {
-	ID                string                 `json:"brandId"`
-	CspID             string                 `json:"cspId"`
-	AccountSid        string                 `json:"accountSid"`
-	EntityType        BrandEntityType        `json:"entityType"`
-	FirstName         string                 `json:"firstName"`
-	LastName          string                 `json:"lastName"`
-	DisplayName       string                 `json:"displayName"`
-	CompanyName       string                 `json:"companyName"`
-	Ein               string                 `json:"ein"`
-	EinIssuingCountry string                 `json:"einIssuingCountry"`
-	Phone             string                 `json:"phone"`
-	MobilePhone       string                 `json:"mobilePhone"`
-	Street            string                 `json:"street"`
-	City              string                 `json:"city"`
-	State             string                 `json:"state"`
-	PostalCode        string                 `json:"postalCode"`
-	Country           string                 `json:"country"`
-	Email             string                 `json:"email"`
-	StockSymbol       string                 `json:"stockSymbol"`
-	StockExchange     string                 `json:"stockExchange"` //TODO: use the enumerated values
-	IPAddress         string                 `json:"ipAddress"`
-	Website           string                 `json:"website"`
-	BrandRelationship BrandRelationship      `json:"brandRelationship"`
-	Vertical          BrandVertical          `json:"vertical"`
-	AltBusinessID     string                 `json:"altBusinessId"`
-	AltBusinessIDType BrandAltBusinessIDType `json:"altBusinessIdType"`
-	UniversalEin      string                 `json:"universalEin"`
-	ReferenceID       string                 `json:"referenceId"`
-	Mock              bool                   `json:"mock"`
-	IdentityStatus    string                 `json:"identityStatus"` //TODO: is there an enum for this?
+	ID                string                  `json:"brandId"`
+	CspID             string                  `json:"cspId"`
+	AccountSid        string                  `json:"accountSid"`
+	EntityType        BrandEntityType         `json:"entityType"`
+	FirstName         string                  `json:"firstName"`
+	LastName          string                  `json:"lastName"`
+	DisplayName       string                  `json:"displayName"`
+	CompanyName       string                  `json:"companyName"`
+	Ein               string                  `json:"ein"`
+	EinIssuingCountry string                  `json:"einIssuingCountry"`
+	Phone             string                  `json:"phone"`
+	MobilePhone       string                  `json:"mobilePhone"`
+	Street            string                  `json:"street"`
+	City              string                  `json:"city"`
+	State             string                  `json:"state"`
+	PostalCode        string                  `json:"postalCode"`
+	Country           string                  `json:"country"`
+	Email             string                  `json:"email"`
+	StockSymbol       string                  `json:"stockSymbol"`
+	StockExchange     string                  `json:"stockExchange"` //TODO: use the enumerated values
+	IPAddress         string                  `json:"ipAddress"`
+	Website           string                  `json:"website"`
+	BrandRelationship BrandRelationship       `json:"brandRelationship"`
+	Vertical          BrandVertical           `json:"vertical"`
+	AltBusinessID     string                  `json:"altBusinessId"`
+	AltBusinessIDType BrandAltBusinessIDType  `json:"altBusinessIdType"`
+	UniversalEin      string                  `json:"universalEin"`
+	ReferenceID       string                  `json:"referenceId"`
+	Mock              bool                    `json:"mock"`
+	IdentityStatus    BrandIdentityStatusType `json:"identityStatus"`
 }
 
 type BrandEntityType string
@@ -118,6 +118,15 @@ var (
 	BrandAltBusinessIDTypeLEI  BrandAltBusinessIDType = "LEI"
 )
 
+type BrandIdentityStatusType string
+
+var (
+	BrandIdentityStatusTypeBlank      BrandIdentityStatusType = ""
+	BrandIdentityStatusTypePending    BrandIdentityStatusType = "PENDING"
+	BrandIdentityStatusTypeVerified   BrandIdentityStatusType = "VERIFIED"
+	BrandIdentityStatusTypeUnverified BrandIdentityStatusType = "UNVERIFIED"
+)
+
 // CreateBrand submits a brand for registration
 func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 	result := new(Brand)
@@ -129,8 +138,8 @@ func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 	// per an email with them:
 	// If you get a blank response, it means that it's pending.
 	// This is something that we need to fix on our end, as it sometimes appears as pending and sometimes blank. But as soon as it's approved, you will see this.
-	if result.IdentityStatus == "" {
-		result.IdentityStatus = "PENDING"
+	if result.IdentityStatus == BrandIdentityStatusTypeBlank {
+		result.IdentityStatus = BrandIdentityStatusTypePending
 	}
 
 	return result, nil
