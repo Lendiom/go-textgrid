@@ -1,7 +1,7 @@
 package textgrid
 
 type TcrWebhookPayload struct {
-	EventType string `json:"eventType"`
+	EventType TcrWebhookEventType `json:"eventType"`
 
 	CspID   string `json:"cspId"`
 	CspName string `json:"cspName"`
