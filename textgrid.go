@@ -35,6 +35,7 @@ type TextGrid interface {
 	DeleteBrand(id string) error
 
 	CreateCampaign(payload CreateCampaignPayload) (*Campaign, error)
+	GetCampaign(id string) (*Campaign, error)
 	DeactivateCampaign(id string) error
 	AttachNumberToCampaign(id, numberID string) error
 
