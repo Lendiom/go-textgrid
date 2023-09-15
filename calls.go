@@ -2,6 +2,13 @@ package textgrid
 
 import "fmt"
 
+type CallInitiatePayload struct {
+	From           string `json:"from"`
+	To             string `json:"to"`
+	StatusCallback string `json:"statusCallback"`
+	ActionURL      string `json:"url"`
+}
+
 type Call struct {
 	Sid            string       `json:"sid"`
 	DateCreated    string       `json:"date_created"`
@@ -30,6 +37,19 @@ func (t *textGrid) GetCall(id string) (*Call, error) {
 	endpoint := fmt.Sprintf("Accounts/%s/Calls/%s.json", t.AccountSid, id)
 
 	if err := t.get(endpoint, nil, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+//InitiateCall initiates a new outbound call, all values of the payload must be provided
+func (t *textGrid) InitiateCall(call CallInitiatePayload) (*Call, error) {
+	result := new(Call)
+
+	endpoint := fmt.Sprintf("Accounts/%s/Calls.json", t.AccountSid)
+
+	if err := t.post(endpoint, call, result); err != nil {
 		return nil, err
 	}
 
