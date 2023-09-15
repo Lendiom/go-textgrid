@@ -2,6 +2,7 @@ package textgrid
 
 import (
 	"encoding/json"
+	"net/url"
 	"time"
 )
 
@@ -84,4 +85,13 @@ func (t TextGridTime) MarshalJSON() ([]byte, error) {
 		return []byte{}, err
 	}
 	return b, nil
+}
+
+func queryParams(params url.Values) string {
+	res := params.Encode()
+	if res == "" {
+		return ""
+	}
+
+	return "?" + res
 }

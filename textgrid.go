@@ -44,6 +44,8 @@ type TextGrid interface {
 
 	ListAvailablePhoneNumbers(countryCode CountryCode, search AvailableNumbersSearch) (*AvailableNumbers, error)
 	AddIncomingPhoneNumber(payload AddIncomingPhoneNumberPayload) (*IncomingPhoneNumber, error)
+
+	Lookups() NumberLookup
 }
 
 // Lob represents information on how to connect to the lob.com API.
@@ -79,15 +81,6 @@ func NewTextGrid(baseAPI, accountSid, authToken string) *textGrid {
 
 func (t *textGrid) generateFullUrl(endpoint string) string {
 	return fmt.Sprintf("%s/%s/%s", t.BaseAPI, APIVersion, endpoint)
-}
-
-func (t *textGrid) queryParams(params url.Values) string {
-	res := params.Encode()
-	if res == "" {
-		return ""
-	}
-
-	return "?" + res
 }
 
 func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error {
@@ -213,7 +206,7 @@ func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue int
 }
 
 func (t *textGrid) get(endpoint string, params url.Values, returnValue interface{}) error {
-	fullURL := t.generateFullUrl(endpoint) + t.queryParams(params)
+	fullURL := t.generateFullUrl(endpoint) + queryParams(params)
 	log.Debugf("TextGrid GET %s", fullURL)
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
@@ -248,7 +241,7 @@ func (t *textGrid) get(endpoint string, params url.Values, returnValue interface
 }
 
 func (t *textGrid) delete(endpoint string, params url.Values) error {
-	fullURL := t.generateFullUrl(endpoint) + t.queryParams(params)
+	fullURL := t.generateFullUrl(endpoint) + queryParams(params)
 	log.Debugf("TextGrid DELETE %s", fullURL)
 	req, err := http.NewRequest("DELETE", fullURL, nil)
 	if err != nil {
