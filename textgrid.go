@@ -39,6 +39,9 @@ type TextGrid interface {
 	DeactivateCampaign(id string) error
 	AttachNumberToCampaign(id, numberID string) error
 
+	GetCall(id string) (*Call, error)
+	InitiateCall(call CallInitiatePayload) (*Call, error)
+
 	ListAvailablePhoneNumbers(countryCode CountryCode, search AvailableNumbersSearch) (*AvailableNumbers, error)
 	AddIncomingPhoneNumber(payload AddIncomingPhoneNumberPayload) (*IncomingPhoneNumber, error)
 }
