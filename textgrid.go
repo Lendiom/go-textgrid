@@ -42,6 +42,8 @@ type TextGrid interface {
 	GetCall(id string) (*Call, error)
 	InitiateCall(call CallInitiatePayload) (*Call, error)
 
+	GetMessage(id string) (*Message, error)
+
 	ListAvailablePhoneNumbers(countryCode CountryCode, search AvailableNumbersSearch) (*AvailableNumbers, error)
 	AddIncomingPhoneNumber(payload AddIncomingPhoneNumberPayload) (*IncomingPhoneNumber, error)
 
