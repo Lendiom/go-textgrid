@@ -89,6 +89,17 @@ func (t *textGrid) CreateCampaign(payload CreateCampaignPayload) (*Campaign, err
 	return result, nil
 }
 
+// GetCampaigns returns all of the campaigns associated with the account
+func (t *textGrid) GetCampaigns() ([]Campaign, error) {
+	result := make([]Campaign, 0)
+
+	if err := t.get("campaigns/campaign", nil, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // GetCampaign gets the campaign details by the provided id
 func (t *textGrid) GetCampaign(id string) (*Campaign, error) {
 	result := new(Campaign)
