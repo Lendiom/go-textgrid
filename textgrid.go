@@ -48,6 +48,8 @@ type TextGrid interface {
 	ListAvailablePhoneNumbers(countryCode CountryCode, search AvailableNumbersSearch) (*AvailableNumbers, error)
 	AddIncomingPhoneNumber(payload AddIncomingPhoneNumberPayload) (*IncomingPhoneNumber, error)
 
+	GetOptInStatus(to, from string) (*OptInStatus, error)
+
 	Lookups() NumberLookup
 }
 
