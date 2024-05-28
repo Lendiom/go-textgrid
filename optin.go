@@ -10,10 +10,19 @@ import "fmt"
 }
 */
 
+// OptInStatusAction is the action that was taken. Either optedin, optedout, or nothing
+type OptInStatusAction string
+
+var (
+	OptInStatusActionOptedOut OptInStatusAction = "optedout"
+	OptInStatusActionOptedIn  OptInStatusAction = "optedin"
+	OptInStatusActionNothing  OptInStatusAction = "nothing"
+)
+
 type OptInStatus struct {
-	Action string `json:"action"`
-	Date   string `json:"date"`
-	Verb   string `json:"verb"`
+	Action OptInStatusAction `json:"action"`
+	Date   string            `json:"date,omitempty"`
+	Verb   string            `json:"verb,omitempty"`
 }
 
 // GetMessage gets the message details by the provided id
