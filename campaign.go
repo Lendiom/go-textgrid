@@ -1,5 +1,21 @@
 package textgrid
 
+import (
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+)
+
+// http11Client forces HTTP/1.1 for endpoints that reject HTTP/2.
+var http11Client = &http.Client{
+	Transport: &http.Transport{
+		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+	},
+}
+
 type CreateCampaignPayload struct {
 	BrandID            string    `json:"brandId"`
 	Usecase            UseCase   `json:"usecase"`
@@ -124,5 +140,40 @@ func (t *textGrid) AttachNumberToCampaign(id, numberID string) error {
 		PhoneNumberSids: []string{numberID},
 	}
 
-	return t.post("campaigns/number/"+id, payload, nil)
+	fullURL := t.generateFullUrl("campaigns/number/" + id)
+	log.Debugf("TextGrid POST %s", fullURL)
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", fullURL, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", t.bearerToken)
+
+	// Use HTTP/1.1 client — TextGrid's campaigns/number endpoint rejects HTTP/2.
+	resp, err := http11Client.Do(req)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logStackTrace(err)
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("non-200/201 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
+	}
+
+	return nil
 }

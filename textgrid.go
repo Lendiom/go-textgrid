@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"runtime"
@@ -68,7 +68,7 @@ const (
 )
 
 // NewLob creates an object that can be used to connect to the lob.com API.
-func NewTextGrid(baseAPI, accountSid, authToken string) *textGrid {
+func NewTextGrid(baseAPI, accountSid, authToken string) TextGrid {
 	token := fmt.Sprintf("%s:%s", accountSid, authToken)
 	base64Value := base64.StdEncoding.EncodeToString([]byte(token))
 
@@ -94,7 +94,7 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		log.Debugf("Failed to unmarshal the payload: %+v", payload)
+		log.Debugf("Failed to marshal the payload: %+v", payload)
 		return err
 	}
 
@@ -117,7 +117,7 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logStackTrace(err)
 		return err
@@ -176,7 +176,7 @@ func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue int
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logStackTrace(err)
 		return err
@@ -229,7 +229,7 @@ func (t *textGrid) get(endpoint string, params url.Values, returnValue interface
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logStackTrace(err)
 		return err
@@ -264,7 +264,7 @@ func (t *textGrid) delete(endpoint string, params url.Values) error {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logStackTrace(err)
 		return err
