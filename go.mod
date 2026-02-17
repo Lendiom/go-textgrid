@@ -1,4 +1,4 @@
-module Lendiom/go-textgrid
+module github.com/Lendiom/go-textgrid
 
 go 1.25.4
 
