@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"net/http"
 	"net/url"
 )
@@ -93,7 +94,7 @@ func (nl *numberLookup) Get(number string) (Lookup, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logStackTrace(err)
 		return res, err
