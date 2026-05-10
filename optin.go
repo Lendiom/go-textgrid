@@ -32,7 +32,7 @@ func (t *textGrid) GetOptInStatus(to, from string) (*OptInStatus, error) {
 	//optin/status/+19132401531/+16095363466
 	endpoint := fmt.Sprintf("optin/status/%s/%s", to, from)
 
-	if err := t.get(endpoint, nil, result); err != nil {
+	if err := t.get("optin.get_status", endpoint, nil, result); err != nil {
 		return nil, err
 	}
 

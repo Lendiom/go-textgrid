@@ -22,7 +22,7 @@ type Account struct {
 func (t *textGrid) CreateAccount(data url.Values) (*Account, error) {
 	result := new(Account)
 
-	if err := t.postForm("Accounts.json", data, result); err != nil {
+	if err := t.postForm("accounts.create", "Accounts.json", data, result); err != nil {
 		return nil, err
 	}
 

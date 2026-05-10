@@ -6,26 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
-	"runtime"
 	"strings"
-
-	"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("textgrid")
-
-// LogStackTrace logs a stack trace for the given error.
-func logStackTrace(err error) {
-	buf := make([]byte, 0, 16384)
-	n := runtime.Stack(buf, false)
-	if err == nil {
-		log.Errorf("nil error; stack trace %s", buf[:n])
-	} else {
-		log.Errorf("non-nil error %s; stack trace %s", err.Error(), buf[:n])
-	}
-}
+const component = "go-textgrid"
 
 type TextGrid interface {
 	CreateAccount(data url.Values) (*Account, error)
@@ -88,13 +75,22 @@ func (t *textGrid) generateFullUrl(endpoint string) string {
 	return fmt.Sprintf("%s/%s/%s", t.BaseAPI, APIVersion, endpoint)
 }
 
-func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error {
+func (t *textGrid) post(op, endpoint string, payload, returnValue interface{}) error {
 	fullURL := t.generateFullUrl(endpoint)
-	log.Debugf("TextGrid POST %s", fullURL)
+	slog.Debug("textgrid POST",
+		slog.String("component", component),
+		slog.String("op", op),
+		slog.String("url", fullURL),
+	)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		log.Debugf("Failed to marshal the payload: %+v", payload)
+		slog.Error("textgrid request failed to marshal payload",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -112,14 +108,25 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request transport failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "POST"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid response body read failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -143,7 +150,14 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		err = fmt.Errorf("non-200/201 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		logStackTrace(err)
+		slog.Error("textgrid request returned non-2xx",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "POST"),
+			slog.Int("status_code", resp.StatusCode),
+			slog.String("body", string(data)),
+		)
 		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
 		return err
 	}
@@ -156,9 +170,13 @@ func (t *textGrid) post(endpoint string, payload, returnValue interface{}) error
 	return json.Unmarshal(data, returnValue)
 }
 
-func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue interface{}) error {
+func (t *textGrid) postForm(op, endpoint string, payload url.Values, returnValue interface{}) error {
 	fullURL := t.generateFullUrl(endpoint)
-	log.Debugf("TextGrid POST form %s", fullURL)
+	slog.Debug("textgrid POST form",
+		slog.String("component", component),
+		slog.String("op", op),
+		slog.String("url", fullURL),
+	)
 
 	req, err := http.NewRequest("POST", fullURL, strings.NewReader(payload.Encode()))
 	if err != nil {
@@ -171,14 +189,25 @@ func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue int
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request transport failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "POST"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid response body read failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -202,7 +231,14 @@ func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue int
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		logStackTrace(err)
+		slog.Error("textgrid request returned non-2xx",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "POST"),
+			slog.Int("status_code", resp.StatusCode),
+			slog.String("body", string(data)),
+		)
 		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
 		return err
 	}
@@ -210,12 +246,22 @@ func (t *textGrid) postForm(endpoint string, payload url.Values, returnValue int
 	return json.Unmarshal(data, returnValue)
 }
 
-func (t *textGrid) get(endpoint string, params url.Values, returnValue interface{}) error {
+func (t *textGrid) get(op, endpoint string, params url.Values, returnValue interface{}) error {
 	fullURL := t.generateFullUrl(endpoint) + queryParams(params)
-	log.Debugf("TextGrid GET %s", fullURL)
+	slog.Debug("textgrid GET",
+		slog.String("component", component),
+		slog.String("op", op),
+		slog.String("url", fullURL),
+	)
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request build failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "GET"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -224,20 +270,38 @@ func (t *textGrid) get(endpoint string, params url.Values, returnValue interface
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request transport failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "GET"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid response body read failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		logStackTrace(err)
+		slog.Error("textgrid request returned non-2xx",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "GET"),
+			slog.Int("status_code", resp.StatusCode),
+			slog.String("body", string(data)),
+		)
 		json.Unmarshal(data, returnValue) // try, anyway -- in case the caller wants error info
 		return err
 	}
@@ -245,12 +309,22 @@ func (t *textGrid) get(endpoint string, params url.Values, returnValue interface
 	return json.Unmarshal(data, returnValue)
 }
 
-func (t *textGrid) delete(endpoint string, params url.Values) error {
+func (t *textGrid) delete(op, endpoint string, params url.Values) error {
 	fullURL := t.generateFullUrl(endpoint) + queryParams(params)
-	log.Debugf("TextGrid DELETE %s", fullURL)
+	slog.Debug("textgrid DELETE",
+		slog.String("component", component),
+		slog.String("op", op),
+		slog.String("url", fullURL),
+	)
 	req, err := http.NewRequest("DELETE", fullURL, nil)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request build failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "DELETE"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -259,20 +333,38 @@ func (t *textGrid) delete(endpoint string, params url.Values) error {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request transport failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "DELETE"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid response body read failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
 	if resp.StatusCode != 204 {
 		err = fmt.Errorf("non-204 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		logStackTrace(err)
+		slog.Error("textgrid request returned non-2xx",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "DELETE"),
+			slog.Int("status_code", resp.StatusCode),
+			slog.String("body", string(data)),
+		)
 		return err
 	}
 

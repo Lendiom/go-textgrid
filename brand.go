@@ -131,7 +131,7 @@ var (
 func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 	result := new(Brand)
 
-	if err := t.post("campaigns/brand/nonblocking", brand, result); err != nil {
+	if err := t.post("brand.create", "campaigns/brand/nonblocking", brand, result); err != nil {
 		return nil, err
 	}
 
@@ -149,7 +149,7 @@ func (t *textGrid) CreateBrand(brand CreateBrandPayload) (*Brand, error) {
 func (t *textGrid) GetBrand(id string) (*Brand, error) {
 	resp := new(Brand)
 
-	if err := t.get("campaigns/brand/"+id, nil, resp); err != nil {
+	if err := t.get("brand.get", "campaigns/brand/"+id, nil, resp); err != nil {
 		return nil, err
 	}
 
@@ -158,5 +158,5 @@ func (t *textGrid) GetBrand(id string) (*Brand, error) {
 
 // DeleteBrand removes the brand, unless it has an active campaign
 func (t *textGrid) DeleteBrand(id string) error {
-	return t.delete("campaigns/brand/"+id, nil)
+	return t.delete("brand.delete", "campaigns/brand/"+id, nil)
 }
