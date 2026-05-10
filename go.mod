@@ -1,8 +1,5 @@
 module github.com/Lendiom/go-textgrid
 
-go 1.18
+go 1.21
 
-require (
-	github.com/google/go-querystring v1.2.0
-	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
-)
+require github.com/google/go-querystring v1.2.0

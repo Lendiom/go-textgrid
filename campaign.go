@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 )
 
@@ -98,7 +99,7 @@ var (
 func (t *textGrid) CreateCampaign(payload CreateCampaignPayload) (*Campaign, error) {
 	result := new(Campaign)
 
-	if err := t.post("campaigns/campaign", payload, result); err != nil {
+	if err := t.post("campaigns.create", "campaigns/campaign", payload, result); err != nil {
 		return nil, err
 	}
 
@@ -109,7 +110,7 @@ func (t *textGrid) CreateCampaign(payload CreateCampaignPayload) (*Campaign, err
 func (t *textGrid) GetCampaigns() ([]Campaign, error) {
 	result := make([]Campaign, 0)
 
-	if err := t.get("campaigns/campaign", nil, &result); err != nil {
+	if err := t.get("campaigns.list", "campaigns/campaign", nil, &result); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +121,7 @@ func (t *textGrid) GetCampaigns() ([]Campaign, error) {
 func (t *textGrid) GetCampaign(id string) (*Campaign, error) {
 	result := new(Campaign)
 
-	if err := t.get("campaigns/campaign/"+id, nil, result); err != nil {
+	if err := t.get("campaigns.get", "campaigns/campaign/"+id, nil, result); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +129,7 @@ func (t *textGrid) GetCampaign(id string) (*Campaign, error) {
 }
 
 func (t *textGrid) DeactivateCampaign(id string) error {
-	return t.delete("campaigns/campaign/"+id, nil)
+	return t.delete("campaigns.deactivate", "campaigns/campaign/"+id, nil)
 }
 
 type attachNumberToCampaign struct {
@@ -136,12 +137,18 @@ type attachNumberToCampaign struct {
 }
 
 func (t *textGrid) AttachNumberToCampaign(id, numberID string) error {
+	const op = "campaigns.attach_number"
+
 	payload := attachNumberToCampaign{
 		PhoneNumberSids: []string{numberID},
 	}
 
 	fullURL := t.generateFullUrl("campaigns/number/" + id)
-	log.Debugf("TextGrid POST %s", fullURL)
+	slog.Debug("textgrid POST",
+		slog.String("component", component),
+		slog.String("op", op),
+		slog.String("url", fullURL),
+	)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -160,18 +167,37 @@ func (t *textGrid) AttachNumberToCampaign(id, numberID string) error {
 	// Use HTTP/1.1 client — TextGrid's campaigns/number endpoint rejects HTTP/2.
 	resp, err := http11Client.Do(req)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request transport failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "POST"),
+			slog.Any("error", err),
+		)
 		return err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid response body read failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return err
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		slog.Error("textgrid request returned non-2xx",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "POST"),
+			slog.Int("status_code", resp.StatusCode),
+			slog.String("body", string(data)),
+		)
 		return fmt.Errorf("non-200/201 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
 	}
 

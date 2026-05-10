@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
+	"log/slog"
 	"net/http"
 	"net/url"
 )
@@ -69,6 +69,8 @@ func (t *textGrid) Lookups() NumberLookup {
 }
 
 func (nl *numberLookup) Get(number string) (Lookup, error) {
+	const op = "lookups.get"
+
 	res := Lookup{}
 
 	params := url.Values{}
@@ -76,11 +78,21 @@ func (nl *numberLookup) Get(number string) (Lookup, error) {
 	params.Add("type", "caller-name")
 
 	fullURL := fmt.Sprintf("https://lookups.textgrid.com/v1/PhoneNumbers/%s", number) + queryParams(params)
-	log.Debugf("TextGrid GET %s", fullURL)
+	slog.Debug("textgrid GET",
+		slog.String("component", component),
+		slog.String("op", op),
+		slog.String("url", fullURL),
+	)
 
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request build failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "GET"),
+			slog.Any("error", err),
+		)
 		return res, err
 	}
 
@@ -89,14 +101,25 @@ func (nl *numberLookup) Get(number string) (Lookup, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid request transport failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "GET"),
+			slog.Any("error", err),
+		)
 		return res, err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logStackTrace(err)
+		slog.Error("textgrid response body read failure",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.Any("error", err),
+		)
 		return res, err
 	}
 
@@ -106,7 +129,14 @@ func (nl *numberLookup) Get(number string) (Lookup, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		logStackTrace(err)
+		slog.Error("textgrid request returned non-2xx",
+			slog.String("component", component),
+			slog.String("op", op),
+			slog.String("url", fullURL),
+			slog.String("method", "GET"),
+			slog.Int("status_code", resp.StatusCode),
+			slog.String("body", string(data)),
+		)
 		json.Unmarshal(data, &res) // try, anyway -- in case the caller wants error info
 		return res, err
 	}

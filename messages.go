@@ -59,7 +59,7 @@ func (t *textGrid) GetMessage(id string) (*Message, error) {
 	//Accounts/kjuUgB7bAst7NP5425662JHOC09Q==/Messages/CAIGVOmFk1Rj~vlCEDKnVBNuQ==.json
 	endpoint := fmt.Sprintf("Accounts/%s/Messages/%s.json", t.AccountSid, id)
 
-	if err := t.get(endpoint, nil, result); err != nil {
+	if err := t.get("messages.get", endpoint, nil, result); err != nil {
 		return nil, err
 	}
 

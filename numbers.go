@@ -47,7 +47,7 @@ func (t *textGrid) ListAvailablePhoneNumbers(countryCode CountryCode, search Ava
 
 	urlPartial := fmt.Sprintf("Accounts/%s/AvailablePhoneNumbers/%s/Local.json", t.AccountSid, countryCode)
 
-	if err := t.get(urlPartial, vals, result); err != nil {
+	if err := t.get("numbers.list_available", urlPartial, vals, result); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (t *textGrid) AddIncomingPhoneNumber(payload AddIncomingPhoneNumberPayload)
 
 	urlPartial := fmt.Sprintf("Accounts/%s/IncomingPhoneNumbers.json", t.AccountSid)
 
-	if err := t.postForm(urlPartial, vals, result); err != nil {
+	if err := t.postForm("numbers.add_incoming", urlPartial, vals, result); err != nil {
 		return nil, err
 	}
 
