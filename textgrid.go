@@ -150,7 +150,7 @@ func (t *textGrid) post(op, endpoint string, payload, returnValue interface{}) e
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		err = fmt.Errorf("non-200/201 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		slog.Error("textgrid request returned non-2xx",
+		slog.Debug("textgrid request returned non-2xx",
 			slog.String("component", component),
 			slog.String("op", op),
 			slog.String("url", fullURL),
@@ -231,7 +231,7 @@ func (t *textGrid) postForm(op, endpoint string, payload url.Values, returnValue
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		slog.Error("textgrid request returned non-2xx",
+		slog.Debug("textgrid request returned non-2xx",
 			slog.String("component", component),
 			slog.String("op", op),
 			slog.String("url", fullURL),
@@ -294,7 +294,7 @@ func (t *textGrid) get(op, endpoint string, params url.Values, returnValue inter
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		slog.Error("textgrid request returned non-2xx",
+		slog.Debug("textgrid request returned non-2xx",
 			slog.String("component", component),
 			slog.String("op", op),
 			slog.String("url", fullURL),
@@ -357,7 +357,7 @@ func (t *textGrid) delete(op, endpoint string, params url.Values) error {
 
 	if resp.StatusCode != 204 {
 		err = fmt.Errorf("non-204 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		slog.Error("textgrid request returned non-2xx",
+		slog.Debug("textgrid request returned non-2xx",
 			slog.String("component", component),
 			slog.String("op", op),
 			slog.String("url", fullURL),
