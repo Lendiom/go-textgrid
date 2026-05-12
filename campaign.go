@@ -190,7 +190,7 @@ func (t *textGrid) AttachNumberToCampaign(id, numberID string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		slog.Error("textgrid request returned non-2xx",
+		slog.Debug("textgrid request returned non-2xx",
 			slog.String("component", component),
 			slog.String("op", op),
 			slog.String("url", fullURL),

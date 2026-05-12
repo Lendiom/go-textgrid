@@ -129,7 +129,7 @@ func (nl *numberLookup) Get(number string) (Lookup, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("non-200 status code %d returned from %s with body %s", resp.StatusCode, fullURL, data)
-		slog.Error("textgrid request returned non-2xx",
+		slog.Debug("textgrid request returned non-2xx",
 			slog.String("component", component),
 			slog.String("op", op),
 			slog.String("url", fullURL),
